@@ -16,13 +16,22 @@ datasource db {
 
 
 
-model Ticket {
+model Conversation {
   id                                               Int                                  @default(autoincrement())
   uuid                                             String               @id             @default(cuid())
   discordUserId                                    String
   discordThreadId                                  String
   intercomConversationId                           String
   message                                          String
+  intercomTicketId                                 String?
+  helpType                                         String
   createdAt                                        DateTime                             @default(now())
-  updatedAt                                        DateTime                             @default(now())
+  updatedAt                                        DateTime                             @updatedAt
+}
+
+
+model HelpTypeCache {
+  id                                              String               @id              @default("1")
+  types                                           String[]
+  updatedAt                                       DateTime                              @updatedAt
 }
