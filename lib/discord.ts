@@ -173,6 +173,7 @@ export const setupDiscord = async () => {
     });
 
     await client.login(process.env.DISCORD_TOKEN);
+    // return client;
   } catch (error) {
     console.error('Bot setup failed:', error);
     process.exit(1);
