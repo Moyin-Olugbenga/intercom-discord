@@ -27,12 +27,12 @@ async function refreshHelpTypes() {
     helpTypes = await fetchHelpTypes();
     
     if (helpTypes.length === 0) {
-      helpTypes = ['Billing', 'Technical', 'Account', 'Feature Request'];
+      helpTypes = ['Billing', 'Appeal', 'Giveaway', 'Rust', 'Other'];
       console.warn('Using default help types');
     }
   } catch (error) {
     console.error('Failed to refresh help types:', error);
-    helpTypes = ['Billing', 'Technical', 'Account', 'Feature Request'];
+    helpTypes = ['Billing', 'Appeal', 'Giveaway', 'Rust', 'Other'];
   }
 }
 
@@ -46,7 +46,7 @@ const client = new Client({
 
 const helpCommand = new SlashCommandBuilder()
   .setName('gethelp')
-  .setDescription('Create a help thread with our support team');
+  .setDescription('Request help from our support team by using the get help button below');
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
