@@ -2,6 +2,7 @@ import axios from "axios";
 
 export const fetchHelpTypes = async (): Promise<string[]> => {
     try {
+      console.log("Gotten the request to fetch help types");
       // First get the conversation model to see available attributes
       const response = await axios.get('https://api.intercom.io/data_attributes', {
         headers: {

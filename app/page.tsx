@@ -7,8 +7,10 @@ export default function BotControl() {
   
   const startBot = async () => {
     try {
-      const res = await fetch('/api/start-bot', { method: 'POST' });
+      console.log("Fetching the Api bot")
+      const res = await fetch('/api/start-bot', { method: 'GET' });
       const data = await res.json();
+      console.log(data)
       setStatus(data.error || `Running as ${data.user}`);
     } catch (err) {
       setStatus('Error starting bot');

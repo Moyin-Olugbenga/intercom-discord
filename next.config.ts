@@ -5,3 +5,9 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+module.exports = {
+  webpack: (config: { externals: string[]; }) => {
+    config.externals.push('bufferutil', 'utf-8-validate');
+    return config;
+  }
+};
