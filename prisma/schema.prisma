@@ -7,19 +7,20 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
+  // previewFeatures = ["clientExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model Conversation {
-  id                                               Int                                  @default(autoincrement())
   uuid                                             String               @id             @default(cuid())
   discordUserId                                    String
-  discordThreadId                                  String
-  intercomConversationId                           String
+  discordThreadId                                  String               @unique
+  intercomConversationId                           String               @unique
+  messages                                         Message[]
   message                                          String
   intercomTicketId                                 String?
   helpType                                         String
@@ -27,9 +28,24 @@ model Conversation {
   updatedAt                                        DateTime                             @updatedAt
 }
 
+enum Source {
+  DISCORD
+  INTERCOM
+}
+
+model Message {
+  uuid                                            String                @id             @default(cuid())
+  content                                         String
+  source                                          Source                @default(DISCORD) 
+  conversation                                    Conversation          @relation(fields: [conversationId], references: [uuid])
+  conversationId                                  String
+  createdAt                                       DateTime              @default(now())
+}
+
 
 model HelpTypeCache {
-  id                                              String               @id              @default("1")
-  types                                           String[]
-  updatedAt                                       DateTime                              @updatedAt
+  uuid                                             String               @id             @default(cuid())
+  types                                            Json
+  updatedAt                                        DateTime                             @updatedAt
+  
 }

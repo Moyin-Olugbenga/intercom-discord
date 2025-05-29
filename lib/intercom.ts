@@ -54,7 +54,7 @@ export const createIntercomConversation = async (params: CreateConversationParam
 };
 
 // Webhook handler for when Intercom conversations become tickets
-export const handleIntercomWebhook = async (payload: any) => {
+export const handleIntercomWebhook = async (payload: { topic: string; data: { item: { id: string; ticket_id: string; }; }; }) => {
   if (payload.topic === 'conversation.admin.closed' || payload.topic === 'conversation.admin.assigned') {
     const conversationId = payload.data.item.id;
     
