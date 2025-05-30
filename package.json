@@ -4,8 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "preinstall": "npm rebuild --update-binary",
-    "install": "npm install --omit=dev --ignore-scripts",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
