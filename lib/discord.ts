@@ -185,13 +185,6 @@ async function handleHelpRequestSubmission(interaction: ModalSubmitInteraction) 
 }
 
 function setupEventHandlers(client: Client) {
-  client.on('ready', async () => {
-    console.log(`Logged in as ${client.user?.tag}!`);
-    await initializeHelpTypes();
-    helpTypes = await fetchHelpTypes();
-    console.log('Available help types:', helpTypes);
-    await postInitialHelpButton(client);
-  });
 
   client.on(Events.MessageCreate, handleThreadMessage);
   console.log("Handled create message ");
@@ -242,6 +235,14 @@ export async function getDiscordClient(): Promise<Client> {
     
     // Initialize database connection
     await ensureConnection();
+
+  clientInstance.on('ready', async () => {
+    console.log(`Logged in as ${clientInstance!.user?.tag}!`);
+    await initializeHelpTypes();
+    helpTypes = await fetchHelpTypes();
+    console.log('Available help types:', helpTypes);
+    await postInitialHelpButton(clientInstance!);
+  });
     
     // Setup event handlers
     setupEventHandlers(clientInstance);
