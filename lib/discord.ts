@@ -216,14 +216,7 @@ function setupEventHandlers(client: Client) {
 }
 
 export async function getDiscordClient(): Promise<Client> {
-  if (clientInstance?.isReady()) {
-    return clientInstance;
-  }
-
-  if (!process.env.DISCORD_TOKEN || !process.env.DISCORD_HELP_CHANNEL_ID) {
-    throw new Error('Missing required Discord environment variables');
-  }
-
+    console.log("Get discord client")
   clientInstance = new Client({ 
     intents: [
       GatewayIntentBits.Guilds,
@@ -231,10 +224,21 @@ export async function getDiscordClient(): Promise<Client> {
       GatewayIntentBits.MessageContent
     ]
   });
+  
+  if (clientInstance?.isReady()) {
+    console.log("Client Instance logged in")
+    return clientInstance;
+  }
+
+  if (!process.env.DISCORD_TOKEN || !process.env.DISCORD_HELP_CHANNEL_ID) {
+    throw new Error('Missing required Discord environment variables');
+  }
+
 
   try {
     // Login to Discord
     await clientInstance.login(process.env.DISCORD_TOKEN);
+    console.log("Client logged in")
     
     // Initialize database connection
     await ensureConnection();
