@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 export async function createIntercomConversation(params: {
-  userId: string;
-  userName: string;
-  title: string;
-  description: string;
+        userId: string,
+        userName: string,
+        helpType:string,
+        description: string
 }) {
   const response = await axios.post(
     'https://api.intercom.io/conversations',
@@ -13,7 +13,7 @@ export async function createIntercomConversation(params: {
         type: 'user',
         id: params.userId
       },
-      body: `**${params.title}**\n\n${params.description}`
+      body: `**${params.helpType}**\n\n${params.description}`
     },
     {
       headers: {

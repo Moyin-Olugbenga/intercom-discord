@@ -67,37 +67,41 @@ async function postInitialHelpButton(client: Client) {
 
 async function showHelpTypeSelection(interaction: ButtonInteraction) {
   if (interaction.customId !== 'show_help_types') return;
+        await interaction.deferReply({ ephemeral: true });
 
-  try {
-    // Create buttons for each help type
-    const buttons = helpTypes.map(type => 
-      new ButtonBuilder()
-        .setCustomId(`help_type_${type.toLowerCase().replace(/\s+/g, '_')}`)
-        .setLabel(type)
-        .setStyle(ButtonStyle.Secondary)
-    );
+      try {
+        // Create buttons for each help type
+        
+        // Short delay before showing options
+          const buttons = helpTypes.map(type => 
+            new ButtonBuilder()
+              .setCustomId(`help_type_${type.toLowerCase().replace(/\s+/g, '_')}`)
+              .setLabel(type)
+              .setStyle(ButtonStyle.Secondary)
+          );
 
 
-    const rows = new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
+          const rows = new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
+          await interaction.editReply({
+            content: 'What do you need help with?',
+            components: [new ActionRowBuilder<ButtonBuilder>().addComponents(buttons)],
+          });
 
-      await interaction.reply({
-        content: 'What do you need help with?',
-        components: [rows],
-        ephemeral: true,
-      });
-  } catch (error) {
-    console.error('Error showing help types:', error);
-    await interaction.reply({
-      content: 'Failed to load help options. Please try again.',
-      ephemeral: true
-    }).catch(console.error);
+        } catch (error) {
+            console.error('Error showing help types:', error);
+            await interaction.followUp({
+            content: 'Please try selecting again',
+            ephemeral: true
+        });
   }
-}
+  }
 
 async function showHelpRequestForm(interaction: ButtonInteraction) {
   if (!interaction.customId.startsWith('help_type_')) return;
 
   const helpType = interaction.customId.replace('help_type_', '').replace(/_/g, ' ');
+        const user = interaction.user;
+    await interaction.deferReply({ ephemeral: true });
 
   try {
     const modal = new ModalBuilder()
@@ -127,6 +131,7 @@ async function showHelpRequestForm(interaction: ButtonInteraction) {
 
 async function handleHelpRequestSubmission(interaction: ModalSubmitInteraction) {
   if (!interaction.customId.startsWith('help_request_')) return;
+    await interaction.deferReply({ ephemeral: true });
 
   const helpType = interaction.customId.replace('help_request_', '').replace(/_/g, ' ');
   const description = interaction.fields.getTextInputValue('help_description');
@@ -141,12 +146,19 @@ async function handleHelpRequestSubmission(interaction: ModalSubmitInteraction) 
 
   try {
     // Create thread with help type in name
-    const threadName = `[${helpType}] ${user.username}'s request`;
-    const thread = await (interaction.channel as TextChannel).threads.create({
-      name: threadName.substring(0, 100), // Ensure name isn't too long
-      autoArchiveDuration: 1440, // 24 hours
-      reason: `${helpType} help request from ${user.username}`
-    });
+   
+     const threadName = `Support - ${user.username}`.substring(0, 100);
+        const thread = await (interaction.channel as TextChannel).threads.create({
+            name: threadName,
+            type: ChannelType.PrivateThread,
+            invitable: false, // Prevents others from adding people
+            reason: `Private support request from ${user.username} on ${helpType} `
+        });
+
+        // Add participants
+        await thread.members.add(user.id); // Add the requester
+        await thread.members.add(process.env.SUPPORT_ROLE_ID!); // Add support team role
+
 
     // Create Intercom conversation
     const intercomConversation = await createIntercomConversation({
@@ -171,17 +183,50 @@ async function handleHelpRequestSubmission(interaction: ModalSubmitInteraction) 
       content: `Your ${helpType} help thread has been created: ${thread}`,
       ephemeral: true
     }).catch(console.error);
+      await interaction.editReply({
+            content: `🔒 Private support thread created: ${thread}\n` +
+                    `Our team has been notified and will respond shortly.`
+        });
 
-    // Send initial message to thread
-    await thread.send(`**${helpType} Help Request**\n\n**User:** ${user.username}\n\n**Description:**\n${description}`)
-      .catch(console.error);
+        // Initial thread message with support ping
+        const supportMessage = await thread.send({
+            content: `<@&${process.env.SUPPORT_ROLE_ID}> New private support request`,
+            embeds: [{
+                color: 0x054fb9,
+                title: `${helpType} Support Request`,
+                description: description,
+                fields: [
+                    { name: "User", value: `${user} (${user.tag})`, inline: true },
+                    { name: "Account Created", value: `<t:${Math.floor(user.createdTimestamp/1000)}:D>`, inline: true },
+                    { name: "Priority", value: "Normal", inline: true }
+                ],
+                footer: { text: "This thread is only visible to support staff and the user" }
+            }],
+            // components: [
+            //     new ActionRowBuilder<ButtonBuilder>().addComponents(
+            //         new ButtonBuilder()
+            //             .setCustomId('support_close_thread')
+            //             .setLabel('✔️ Resolve')
+            //             .setStyle(ButtonStyle.Success),
+            //         new ButtonBuilder()
+            //             .setCustomId('support_escalate')
+            //             .setLabel('⚠️ Escalate')
+            //             .setStyle(ButtonStyle.Danger)
+            //     )
+            // ]
+        });
 
-  } catch (error) {
-    console.error('Error processing help request:', error);
-    await interaction.reply({
-      content: 'Failed to process your help request. Please try again.',
-      ephemeral: true
-    }).catch(console.error);
+        // Pin important message
+        await supportMessage.pin().catch(console.error);
+
+    } catch (error) {
+        console.error('Thread creation failed:', error);
+        
+        await interaction.followUp({
+            content: `⚠️ Error creating private thread\n` +
+                    `Our team has been notified. Please message <@&${process.env.SUPPORT_ROLE_ID}> directly.`,
+            ephemeral: true
+        });
   }
 }
 
