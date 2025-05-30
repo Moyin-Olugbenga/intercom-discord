@@ -193,8 +193,9 @@ export async function getDiscordClient(): Promise<Client> {
     await initializeHelpTypes();
     
     // Get current types (will use cache)
-    const helpTypes = await fetchHelpTypes();
+    helpTypes = await fetchHelpTypes();
     console.log('Available help types:', helpTypes);
+    setInterval(() => {}, 1000 * 60);
 
     return clientInstance;
   } catch (error) {
