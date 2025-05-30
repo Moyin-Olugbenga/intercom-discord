@@ -223,24 +223,24 @@ export async function getDiscordClient(): Promise<Client> {
     return clientInstance;
   }
 
-  if (!process.env.DISCORD_TOKEN || !process.env.DISCORD_HELP_CHANNEL_ID) {
+  if (!process.env.DISCORD_TOKEN! || !process.env.DISCORD_HELP_CHANNEL_ID!) {
     throw new Error('Missing required Discord environment variables');
   }
 
 
   try {
     // Login to Discord
-    await clientInstance.login(process.env.DISCORD_TOKEN);
+    await clientInstance.login(process.env.DISCORD_TOKEN!);
     console.log("Client logged in")
     
     // Initialize database connection
     await ensureConnection();
 
+    helpTypes = await fetchHelpTypes();
+    console.log('Available help types:', helpTypes);
   clientInstance.on('ready', async () => {
     console.log(`Logged in as ${clientInstance!.user?.tag}!`);
     await initializeHelpTypes();
-    helpTypes = await fetchHelpTypes();
-    console.log('Available help types:', helpTypes);
     await postInitialHelpButton(clientInstance!);
   });
     
