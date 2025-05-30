@@ -210,6 +210,18 @@ function setupEventHandlers(client: Client) {
 
 export async function getDiscordClient(): Promise<Client> {
     console.log("Get discord client")
+    if (clientInstance?.isReady()) {
+      return clientInstance;
+    }
+
+    if (!process.env.DISCORD_TOKEN) {
+      throw new Error('DISCORD_TOKEN environment variable is required');
+    }
+    
+  if (!process.env.DISCORD_HELP_CHANNEL_ID) {
+    console.warn('DISCORD_HELP_CHANNEL_ID not set, will use first available text channel');
+  }
+
   clientInstance = new Client({ 
     intents: [
       GatewayIntentBits.Guilds,
@@ -218,40 +230,30 @@ export async function getDiscordClient(): Promise<Client> {
     ]
   });
   
-  if (clientInstance?.isReady()) {
-    console.log("Client Instance logged in")
-    return clientInstance;
-  }
+  // Setup all handlers before login
+  setupEventHandlers(clientInstance);
 
-  if (!process.env.DISCORD_TOKEN! || !process.env.DISCORD_HELP_CHANNEL_ID!) {
-    throw new Error('Missing required Discord environment variables');
-  }
-
-
-  try {
-    // Login to Discord
-    await clientInstance.login(process.env.DISCORD_TOKEN!)
-  .then(() => console.log('Login successful'))
-  .catch(err => console.error('Login FAILED:', err));
-    console.log("Client logged in")
+try {    
+      const loginPromise = new Promise<void>((resolve, reject) => {
+      clientInstance!.once('ready', async () => {
+        try {
+          console.log(`✅ Logged in as ${clientInstance!.user!.tag}`);
+          await ensureConnection();
+          helpTypes = await fetchHelpTypes();
+          await postInitialHelpButton(clientInstance!);
+          resolve();
+        } catch (readyError) {
+          reject(readyError);
+        }
+      });
+    });
     
-    // Initialize database connection
-    await ensureConnection();
-
-    helpTypes = await fetchHelpTypes();
-    console.log('Available help types:', helpTypes);
-  clientInstance.on('ready', async () => {
-    console.log(`Logged in as ${clientInstance!.user?.tag}!`);
-    await initializeHelpTypes();
-    await postInitialHelpButton(clientInstance!);
-  });
-    
-    // Setup event handlers
-    setupEventHandlers(clientInstance);
+    // Start login process
+    await clientInstance.login(process.env.DISCORD_TOKEN);
+    await loginPromise; // Wait for ready event to complete
 
     return clientInstance;
   } catch (error) {
-    console.error('Bot initialization failed:', error);
     await cleanupDiscordClient();
     throw error;
   }
