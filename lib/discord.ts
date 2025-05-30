@@ -230,7 +230,9 @@ export async function getDiscordClient(): Promise<Client> {
 
   try {
     // Login to Discord
-    await clientInstance.login(process.env.DISCORD_TOKEN!);
+    await clientInstance.login(process.env.DISCORD_TOKEN!)
+  .then(() => console.log('Login successful'))
+  .catch(err => console.error('Login FAILED:', err));
     console.log("Client logged in")
     
     // Initialize database connection
