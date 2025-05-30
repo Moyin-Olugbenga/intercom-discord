@@ -1,10 +1,10 @@
 {
   "build": {
-    "nixpacks": {
-      "phases": {
-        "setup": {
-          "aptPackages": ["python3", "make", "g++"]
-        }
+    "builder": "nixpacks",
+    "config": {
+      "nixpacks": {
+        "providers": ["node"],
+        "install": ["python39"]
       }
     }
   }
