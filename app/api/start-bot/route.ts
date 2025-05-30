@@ -9,6 +9,7 @@ export async function GET() {
       username: client.user?.tag
     }));
   } catch (error) {
+    console.log(error)
     return new Response(JSON.stringify({ error: 'Failed to start bot' }), {
       status: 500
     });
