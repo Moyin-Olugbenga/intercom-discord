@@ -24,48 +24,6 @@ import { ensureConnection, prisma } from '@/prisma/connection';
 let clientInstance: Client | null = null;
 let helpTypes: string[] = [];
 
-// async function postInitialHelpButton(client: Client) {
-//   try {
-//     const button = new ButtonBuilder()
-//       .setCustomId('show_help_types')
-//       .setLabel(process.env.HELP_BUTTON_LABEL || 'Get Help')
-//       .setStyle(ButtonStyle.Primary);
-
-//     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
-
-//     let channel: TextChannel | null = null;
-
-//     // Try to fetch the configured channel
-//     if (process.env.DISCORD_HELP_CHANNEL_ID) {
-//       const fetched = await client.channels.fetch(process.env.DISCORD_HELP_CHANNEL_ID);
-//       if (fetched?.type === ChannelType.GuildText) {
-//         channel = fetched as TextChannel;
-//       }
-//     }
-
-//     // Fallback to first available text channel
-//     if (!channel) {
-//       channel = client.channels.cache.find(
-//         ch => ch.type === ChannelType.GuildText
-//       ) as TextChannel | null;
-//     }
-
-//     if (!channel) {
-//       console.warn('No valid text channel found to post the help button.');
-//       return;
-//     }
-
-//       await channel.send({
-//         content: 'Click the button below to get help from our support team',
-//         components: [row],
-//       });
-//   } catch (error) {
-//     console.error('Failed to post help button:', error);
-//   }
-
-// }
-
-
 async function postInitialHelpButton(client: Client) {
   try {
     const button = new ButtonBuilder()
@@ -97,40 +55,15 @@ async function postInitialHelpButton(client: Client) {
       return;
     }
 
-    // 1. Check for existing buttons with proper type safety
-    const messages = await channel.messages.fetch({ limit: 20 });
-    
-    // Filter messages that have our button
-    const messagesWithButton = messages.filter(msg => {
-      if (!msg.components || msg.components.length === 0) return false;
-      
-      return msg.components.some((component: any) => 
-        component.components.some((comp: any) => 
-          comp.customId === 'show_help_types'
-        )
-      );
-    });
-
-    // 2. Delete existing buttons if found
-    if (messagesWithButton.size > 0) {
-      await Promise.all(
-        messagesWithButton.map(msg => msg.delete().catch(console.error))
-      );
-      console.log(`Deleted ${messagesWithButton.size} existing help buttons`);
-    }
-
-    // 3. Post new button
-    await channel.send({
-      content: process.env.HELP_BUTTON_MESSAGE || 'Click the button below to get help from our support team',
-      components: [row],
-    });
-
-    console.log('Successfully posted new help button');
+      await channel.send({
+        content: 'Click the button below to get help from our support team',
+        components: [row],
+      });
   } catch (error) {
     console.error('Failed to post help button:', error);
   }
+  
 }
-
 
 async function showHelpTypeSelection(interaction: ButtonInteraction) {
   if (interaction.customId !== 'show_help_types') return;
