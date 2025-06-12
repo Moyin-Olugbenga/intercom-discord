@@ -11,6 +11,7 @@ export const fetchHelpTypes = async (): Promise<string[]> => {
     const cached = await prisma.helpTypeCache.findFirst({
       orderBy: { updatedAt: 'desc' }
     });
+    
 
     // Return cached types if fresh
     if (cached && (Date.now() - cached.updatedAt.getTime()) < CACHE_TTL_MS) {
@@ -34,8 +35,7 @@ export const fetchHelpTypes = async (): Promise<string[]> => {
     );
 
     const types = helpTypeAttribute?.options || DEFAULT_HELP_TYPES;
-
-    // Update cache - MySQL compatible upsert
+    
     await prisma.helpTypeCache.upsert({
       where: { uuid: cached?.uuid || '' },
       create: { types },

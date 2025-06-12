@@ -11,7 +11,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -45,7 +45,7 @@ model Message {
 
 model HelpTypeCache {
   uuid                                             String               @id             @default(cuid())
-  types                                            Json
+  types                                            String[]
   updatedAt                                        DateTime                             @updatedAt
   
 }

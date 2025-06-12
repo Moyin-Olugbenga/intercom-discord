@@ -18,7 +18,7 @@ import {
   ButtonInteraction,
   ModalSubmitInteraction
 } from 'discord.js';
-import { ensureConnection, prisma } from '@/prisma/connection';
+import { prisma } from '@/prisma/connection';
 
 // Singleton client instance
 let clientInstance: Client | null = null;
@@ -55,6 +55,18 @@ async function postInitialHelpButton(client: Client) {
       return;
     }
 
+        const messages = await channel.messages.fetch({ limit: 20 });
+        const deletePromises = messages.map(async msg => {
+            try {
+              return await msg.delete();
+            } catch (message) {
+              return console.error(message);
+            }
+          return Promise.resolve();
+        });
+        await Promise.all(deletePromises);
+
+
       await channel.send({
         content: 'Click the button below to get help from our support team',
         components: [row],
@@ -71,6 +83,14 @@ async function showHelpTypeSelection(interaction: ButtonInteraction) {
 
       try {
         // Create buttons for each help type
+         // Short delay before showing options
+    // const btnId = `help_type_${Date.now()}_${Math.random().toString(36).substring(4, 10)}`;
+    //       const buttons = helpTypes.map(type => 
+    //         new ButtonBuilder()
+    //           .setCustomId(btnId)
+    //           .setLabel(type)
+    //           .setStyle(ButtonStyle.Secondary)
+    //       );
         
         // Short delay before showing options
           const buttons = helpTypes.map(type => 
@@ -101,11 +121,13 @@ async function showHelpRequestForm(interaction: ButtonInteraction) {
 
   const helpType = interaction.customId.replace('help_type_', '').replace(/_/g, ' ');
         const user = interaction.user;
-    await interaction.deferReply({ ephemeral: true });
+    // await interaction.deferReply({ ephemeral: true });
 
-  try {
+  try { 
+    const modalId = `help_request_${Date.now()}`;
+    
     const modal = new ModalBuilder()
-      .setCustomId(`help_request_${helpType.replace(/\s+/g, '_')}`)
+      .setCustomId(modalId)
       .setTitle(`${helpType} Help Request`)
       .addComponents(
         new ActionRowBuilder<TextInputBuilder>().addComponents(
@@ -120,12 +142,20 @@ async function showHelpRequestForm(interaction: ButtonInteraction) {
       );
 
     await interaction.showModal(modal);
-  } catch (error) {
-    console.error('Error showing help form:', error);
-    await interaction.reply({
-      content: 'Failed to open help form. Please try again.',
-      ephemeral: true
-    }).catch(console.error);
+    // await interaction.deleteReply().catch(console.error);
+    }catch (error) {
+    console.error('Modal error:', error);
+    if (interaction.replied) {
+      await interaction.followUp({
+        content: "Please click the help button again",
+        ephemeral: true
+      });
+    } else {
+      await interaction.reply({
+        content: "Click the button to open help form",
+        ephemeral: true
+      });
+    }
   }
 }
 
@@ -157,23 +187,21 @@ async function handleHelpRequestSubmission(interaction: ModalSubmitInteraction) 
 
         // Add participants
         await thread.members.add(user.id); // Add the requester
-        await thread.members.add(process.env.SUPPORT_ROLE_ID!); // Add support team role
+        // await thread.members.add(process.env.SUPPORT_ROLE_ID!); // Add support team role
 
 
     // Create Intercom conversation
-    const intercomConversation = await createIntercomConversation({
-      userId: user.id,
-      userName: user.username,
-      helpType,
-      description
-    });
+    const userId = user.id
+    const userName = user.username
+    console.log(userId, userName, helpType, description)
+    // const intercomConversation = await createIntercomConversation(userId, userName, helpType, description);
 
     // Save to database
     await prisma.conversation.create({
       data: {
         discordUserId: user.id,
         discordThreadId: thread.id,
-        intercomConversationId: intercomConversation.id,
+        intercomConversationId: thread.id,
         helpType,
         message: description
       }
@@ -284,7 +312,7 @@ try {
       clientInstance!.once('ready', async () => {
         try {
           console.log(`✅ Logged in as ${clientInstance!.user!.tag}`);
-          await ensureConnection();
+          // await ensureConnection();
           helpTypes = await fetchHelpTypes();
           await postInitialHelpButton(clientInstance!);
           resolve();
